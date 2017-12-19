@@ -76,7 +76,7 @@ describe("new EventBus", function() {
 
         let cb1 = function(){};
         let cb2 = function(){};
-        let context = 'значение';
+
 
         it("off является методом", function() {
             assert.isOk( typeof eb.off === 'function');
@@ -87,8 +87,8 @@ describe("new EventBus", function() {
             eb.on('some:event', cb2);
             eb.off('some:event', cb1);
             eb.listeners['some:event'].forEach((b)=>{
-                assert.isOk( b.toString().replace(/\s/g,"") !== cb1.toString().replace(/\s/g,""));
-                assert.isOk( b.toString().replace(/\s/g,"") === cb2.toString().replace(/\s/g,""));
+                assert.isOk( b !== cb1);
+                assert.isOk( b === cb2);
             });
         });
 
@@ -114,8 +114,8 @@ describe("new EventBus", function() {
 
             for( let key in eb.listeners){
                 eb.listeners[key].forEach((b)=>{
-                    assert.isOk( b.toString().replace(/\s/g,"") !== cb1.toString().replace(/\s/g,""));
-                    assert.isOk( b.toString().replace(/\s/g,"") === cb2.toString().replace(/\s/g,""));
+                    assert.isOk( b !== cb1);
+                    assert.isOk( b === cb2);
                 });
             }
 
@@ -151,8 +151,26 @@ describe("new EventBus", function() {
             assert.isOk( a ===  1);
         });
     });
+    describe (`от Василия`, function () {
+        it(`проверка off`, function () {
 
-    describe (`от Сергея Ярмоленко`, function () {
+            let p;
+
+            function User(name) { this.greet = () => { p = name}}
+            let u1 = new User('Bob');
+            let u2 = new User('Sam');
+
+            eb.on('hello', u1.greet);
+            eb.on('hello', u2.greet);
+            eb.off('hello', u1.greet);
+            eb.trigger('hello');
+
+
+            assert.isOk( p === 'Sam');
+
+        });
+    });
+    describe ('tests of Yarmolenka Siarhei', function () {
 
         it (`.on, .off, .trigger, .once are functions`, function () {
             assert.equal(typeof eb.on, `function`);

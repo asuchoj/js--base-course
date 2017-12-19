@@ -11,15 +11,17 @@ EventBus.prototype.on = function(eventName, cb){
 EventBus.prototype.off = function(eventName, cb){
 
     if( !eventName && cb ){
+
         for( let key in this.listeners){
             this.listeners[key].forEach((b)=>{
                 let d = [];
-                if( b.toString().replace(/\s/g,"") !== cb.toString().replace(/\s/g,"") ){
+                if( b !== cb){
                     d.push(b)
                 }
                 return this.listeners[key] = d;
             })
         }
+
     }
 
     if( eventName && !cb ) {
@@ -31,13 +33,13 @@ EventBus.prototype.off = function(eventName, cb){
     }
 
     if(eventName && cb){
+        let d = [];
         this.listeners[eventName].forEach((b)=>{
-            let d = [];
-            if( b.toString().replace(/\s/g,"") !== cb.toString().replace(/\s/g,"") ){
+            if( b !== cb ){
                 d.push(b)
             }
-            return this.listeners[eventName] = d;
-        })
+        });
+        return this.listeners[eventName] = d;
     }
     if(!eventName && !cb){
         return this.listeners = {};
