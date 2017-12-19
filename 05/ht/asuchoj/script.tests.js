@@ -6,13 +6,9 @@
 mocha.setup("bdd");
 let assert = chai.assert;
 
-describe("Test", function() {
-    it("test", function() {
-        assert.isOk(true);
-    });
-});
 describe("new EventBus", function() {
     let eb;
+
     beforeEach(() => eb = new EventBus());
 
     it("EventBus is function", function() {
@@ -29,16 +25,105 @@ describe("new EventBus", function() {
             assert.isOk( typeof eb.trigger === 'function');
         });
     });
+
     describe("off", function() {
-        it("trigger is method", function() {
+
+
+        let cb1 = function(){};
+        let cb2 = function(){};
+        let context = 'значение';
+
+        it("off является методом", function() {
             assert.isOk( typeof eb.off === 'function');
         });
-    });
-    describe("once", function() {
-        it("trigger is method", function() {
-            assert.isOk( typeof eb.once === 'function');
+
+        it( "1. Удаляет только обработчик `onChange`", function() {
+            eb.on('some:event', cb1);
+            eb.on('some:event', cb2);
+            eb.off('some:event', cb1);
+            eb.listeners['some:event'].forEach((b)=>{
+                assert.isOk( b.toString().replace(/\s/g,"") !== cb1.toString().replace(/\s/g,""));
+                assert.isOk( b.toString().replace(/\s/g,"") === cb2.toString().replace(/\s/g,""));
+            });
+        });
+
+        it("2. Удаляет все «обратные» изменения.", function() {
+            eb.on('some:event', cb1);
+            eb.on('some:event', cb2);
+            eb.on('some:event2', cb1);
+            eb.off('some:event');
+            assert.isOk( !eb.listeners['some:event']);
+            assert.isOk( eb.listeners['some:event2']);
+
+        });
+
+        it("3. Удаляет обратный вызов `onChange` для всех событий.", function() {
+            eb.on('some:event', cb1);
+            eb.on('some:event', cb2);
+            eb.on('some:event1', cb1);
+            eb.on('some:event1', cb2);
+            eb.on('some:event2', cb1);
+            eb.on('some:event2', cb2);
+
+            eb.off( null, cb1);
+
+            for( let key in eb.listeners){
+                eb.listeners[key].forEach((b)=>{
+                    assert.isOk( b.toString().replace(/\s/g,"") !== cb1.toString().replace(/\s/g,""));
+                    assert.isOk( b.toString().replace(/\s/g,"") === cb2.toString().replace(/\s/g,""));
+                });
+            }
+
+        });
+
+        /*it("4. Удаляет все обратные вызовы для контекста для всех событий.", function() {
+
+            eb.on('some:event', cb1(context));
+            eb.on('some:event', cb2(context));
+            eb.on('some:event1', cb1);
+            eb.on('some:event1', cb2(context));
+
+            eb.off( null, null, context);
+
+            for( let key in eb.listeners){
+                eb.listeners[key].forEach((b)=>{
+                    assert.isOk( b.toString().replace(/\s/g,"") !== cb1.toString().replace(/\s/g,""));
+                    assert.isOk( b.toString().replace(/\s/g,"") === cb2.toString().replace(/\s/g,""));
+                });
+            }
+        });*/
+
+        it("5. Удаляет все обратные вызовы в `object`", function() {
+
+            eb.on('some:event', cb1);
+            eb.on('some:event1', cb2);
+
+            eb.off();
+            assert.isOk( Object.keys( eb.listeners ).length === 0 );
         });
     });
+
+    describe("once", function() {
+
+        it("on is method", function() {
+            assert.isOk( typeof eb.once === 'function');
+        });
+
+        it("once вызывается один раз для одного метода ", function() {
+            let a = 0;
+            let cb = function () {
+              return a++;
+            }
+
+            eb.once('some:event', cb);
+            eb.trigger('some:event');
+            eb.trigger('some:event');
+            eb.trigger('some:event');
+
+            assert.isOk( a ===  1);
+        });
+    });
+
     describe('bus', () => {
         it('call subscriber', () => {
             let i = 0;
@@ -90,7 +175,5 @@ describe("new EventBus", function() {
         })
     });
 });
-
-
 
 mocha.run();
