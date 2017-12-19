@@ -53,11 +53,11 @@ EventBus.prototype.trigger = function(eventName, ...data){
 
 EventBus.prototype.once = function(eventName, cb){
     let self = this;
-    function temp() {
+    function addOnceCallback() {
       cb.apply(this, arguments);
-      self.off(eventName, temp);
+      self.off(eventName, addOnceCallback);
     }
-    this.on(eventName, temp);
+    this.on(eventName, addOnceCallback);
 };
 
 
