@@ -34,6 +34,8 @@ EventBus.prototype.off = function(eventName, cb){
 
     if(eventName && cb){
         let d = [];
+        if(cb === undefined) return;
+
         this.listeners[eventName].forEach((b)=>{
             if( b !== cb ){
                 d.push(b)
