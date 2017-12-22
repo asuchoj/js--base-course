@@ -2,16 +2,12 @@
 function EventBus() {
     this.listeners = {};
 }
-
 EventBus.prototype.on = function(eventName, cb){
     this.listeners[eventName] = Array.isArray(this.listeners[eventName]) ? this.listeners[eventName] : [];
     this.listeners[eventName].push(cb);
 };
-
 EventBus.prototype.off = function(eventName, cb){
-
     if( !eventName && cb ){
-
         for( let key in this.listeners){
             this.listeners[key].forEach((b)=>{
                 let d = [];
@@ -21,9 +17,7 @@ EventBus.prototype.off = function(eventName, cb){
                 return this.listeners[key] = d;
             })
         }
-
     }
-
     if( eventName && !cb ) {
         for( let key in this.listeners){
             if( this.listeners[key] === this.listeners[eventName]){
@@ -31,11 +25,9 @@ EventBus.prototype.off = function(eventName, cb){
             }
         }
     }
-
     if(eventName && cb){
         let d = [];
         if(cb === undefined) return;
-
         this.listeners[eventName].forEach((b)=>{
             if( b !== cb ){
                 d.push(b)
@@ -46,15 +38,10 @@ EventBus.prototype.off = function(eventName, cb){
     if(!eventName && !cb){
         return this.listeners = {};
     }
-
 };
-
 EventBus.prototype.trigger = function(eventName, ...data){
     (this.listeners[eventName] || []).forEach(cb => cb.apply(this, data) )
 };
-
-
-
 EventBus.prototype.once = function(eventName, cb){
     let self = this;
     function addOnceCallback() {
@@ -64,4 +51,14 @@ EventBus.prototype.once = function(eventName, cb){
     this.on(eventName, addOnceCallback);
 };
 
-
+/*шаблонизатор*/
+let compileTemplate = function (tp) {
+  let newTp = tp;
+  return function (el, data) {
+    for (let key in data) {
+      let regexp = new RegExp("{{" + key + "}}");
+      newTp = newTp.replace(regexp,data[key]);
+    }
+    return el.innerHTML = newTp;
+  }
+}
