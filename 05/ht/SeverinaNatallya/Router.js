@@ -10,6 +10,7 @@
     );
     this.handleHashChange(window.location.hash); //при перезагрузке станицы вызвать нужные функции
 };
+
 //обработчик смены url
 Router.prototype.handleHashChange = function (url) {
     url = url.slice(1);
@@ -25,12 +26,14 @@ Router.prototype.handleHashChange = function (url) {
     this.activeParam = this.getParams(url);
     this.execFunctions();
 };
+
 //извлечение параметров из url
 Router.prototype.getParams = function (url) {
     let params = url.match(this.activeRoute.match) || [];
     if (params.length == 2) return params[1];
     return params;
 };
+
 //запуск функций из маршрутов
 Router.prototype.execFunctions = function () {
     Promise.resolve()

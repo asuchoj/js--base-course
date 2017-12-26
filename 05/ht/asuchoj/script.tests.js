@@ -270,5 +270,115 @@ describe("new EventBus", function() {
       assert.equal(1, 1);
     });
   });
+
+
+  describe('Router', () => {
+    let router = new Router({
+      routes: [{
+        name: 'empty',
+        match: "",
+        onBeforeEnter: {},
+        onEnter: {},
+      }]
+    });
+
+    it('Функция', () => {
+      assert.isOk(typeof Router === "function");
+    })
+    it('Конструктор', () => {
+      assert.isOk(router instanceof Router);
+    })
+    it('Есть метод findNewRoute', () => {
+      assert.isOk(typeof router.findNewRoute === "function");
+    })
+    it('Есть метод hashCheck', () => {
+      assert.isOk(typeof router.hashCheck === "function");
+    })
+    it('Работает при создании без агрументов', () => {
+      assert.isOk((new Router()) instanceof Router);
+    })
+    it('Работает при отсутсвии некоторых методов', (done) => {
+      let string = "";
+      let myRouter = new Router({
+        routes: [{
+          name: 'noMethods',
+          match: 'noMethods',
+          onEnter: () => {
+            string += "Enter"
+          }
+        }]
+      });
+
+      setTimeout(done, 20);
+      setTimeout(() => myRouter.hashCheck("#noMethods"), 10);
+      setTimeout(() => assert.isOk(string === "Enter"), 10);
+    })
+
+    it('Верная последовательность выполнения роутов', (done) => {
+      let string = ""
+      let myRouter = new Router({
+        routes: [{
+          name: 'checkRout',
+          match: 'changeString',
+          onLeave: () => {
+            string += "Leave"
+          },
+          onBeforeEnter: () => {
+            string += "BeforeEnter"
+          },
+          onEnter: () => {
+            string += "Enter"
+          }},{
+            name: 'empty',
+            match: "",
+            onLeave: () => {
+              string += "Leave"
+            },
+            onBeforeEnter: () => {
+              string += "BeforeEnter"
+            },
+            onEnter: () => {
+              string = ""
+            }
+          }]
+        });
+
+      setTimeout(done, 10);
+      setTimeout(() => myRouter.hashCheck("#"), 10);
+      setTimeout(() => myRouter.hashCheck("#changeString"), 10);
+      setTimeout(() => assert.isOk(string === "LeaveBeforeEnterEnter"), 10);
+    })
+
+    it('Работает со строками', (done) => {
+      let string = ""
+      let myRouter = new Router({
+        routes: [{
+          name: 'string',
+          match: /string=(.+)/,
+          onEnter: (str) => string = str
+        }]
+      });
+
+      setTimeout(done, 10);
+      setTimeout(() => myRouter.hashCheck("#string=helloWorld"), 10);
+      setTimeout(() => assert.isOk(string === "helloWorld"), 10);
+    })
+
+    it('Работает с функциями', (done) => {
+      let string = "";
+
+      let myRouter = new Router({
+        routes: [{
+          name: 'function',
+          match: (text) => text + " and JavaScript",
+          onBeforeEnter: (text) => string = text
+        }]
+      });
+      setTimeout(done, 10);
+      setTimeout(() => myRouter.hashCheck("#helloWorld"), 10);
+      setTimeout(() => assert.isOk(string === "helloWorld and JavaScript"), 10);
+    })
+  })
 });
+
 mocha.run();

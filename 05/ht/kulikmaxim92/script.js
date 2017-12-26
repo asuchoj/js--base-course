@@ -63,6 +63,7 @@ function getPropertyValue(obj, properties) {
 /**
  * Router
  */
+
 function Router(routes, eventBus) {
   this.routes = routes || [];
   this.init(eventBus);
