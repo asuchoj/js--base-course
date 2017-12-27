@@ -253,150 +253,90 @@ describe("new EventBus", function() {
       assert.equal(1, 1);
     });
   });
-});
+})
 
-describe('Router', () => {
-  var a = 0;
-
-  var asyncResolveFunc = function(x) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        a += x;
-        resolve();
-      }, 50);
-    });
-  };
-
-  var asyncRejectFunc = function(x) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        a += x;
-        reject();
-      }, 50);
-    });
-  };
-
-  var routes = [
-    {
-      name: '1',
-      match: '1',
-      onBeforeEnter: () => a++,
-      onEnter: () => a++,
-      onLeave: () => a++,
-    },
-    {
-      name: '2',
-      match: /x=(\d)/,
-      onBeforeEnter: (regexMatch) => a += +regexMatch[1],
-      onEnter: (regexMatch) => a += +regexMatch[1],
-      onLeave: (regexMatch) => a += +regexMatch[1],
-    },
-    {
-      name: '3',
-      match: (x) => x === 'value',
-      onBeforeEnter: () => a++,
-      onEnter: () => a++,
-      onLeave: () => a++,
-    },
-    {
-      name: 'oneByOneCallHandlers-oldUrl',
-      match: 'oneByOneCallHandlers-oldUrl',
-      onBeforeEnter: () => asyncResolveFunc(1),
-      onEnter: () => asyncResolveFunc(2),
-      onLeave: () => asyncResolveFunc(3),
-    },
-    {
-      name: 'oneByOneCallHandlers-newUrl',
-      match: 'oneByOneCallHandlers-newUrl',
-      onBeforeEnter: () => asyncResolveFunc(1),
-      onEnter: () => asyncResolveFunc(2),
-      onLeave: () => asyncResolveFunc(3),
-    },
-    {
-      name: 'rejectOnLeave',
-      match: 'rejectOnLeave',
-      onBeforeEnter: () => asyncResolveFunc(1),
-      onEnter: () => asyncResolveFunc(2),
-      onLeave: () => asyncRejectFunc(3),
-    },
-    {
-      name: 'rejectOnBeforeEnter',
-      match: 'rejectOnBeforeEnter',
-      onBeforeEnter: () => asyncRejectFunc(1),
-      onEnter: () => asyncResolveFunc(2),
-      onLeave: asyncResolveFunc(3),
-    },
-    {
-      name: 'rejectOnEnter',
-      match: 'rejectOnEnter',
-      onBeforeEnter: () => asyncResolveFunc(1),
-      onEnter: () => asyncRejectFunc(2),
-      onLeave: asyncResolveFunc(3),
-    },
-  ];
-  var eventBus = new EventBus();
-  var router = new Router(routes, eventBus);
-
-  it('is a function', () => assert.isOk(typeof (Router) === 'function'));
-  it('has .init method', () => assert.isOk(typeof ((new Router()).init) === 'function'));
-  it('has .handleUrl method', () => assert.isOk(typeof ((new Router()).handleUrl) === 'function'));
-  it('handlers fulfill asynchronously', (done) => {
-    a = 0;
-    eventBus.trigger('changeUrl', '1', 'x=2');
-    assert(a === 0, 'a was not changed');
-    a++;
-    assert(a === 1, 'a was changed synchronously');
-    setTimeout(() => assert.isOk(a === 6, 'a was changed asynchronously'), 0);
-    setTimeout(done, 0);
+describe('Router', function() {
+  it('Функция', () => {
+    assert.isOk(typeof(Router) === 'function');
   });
-  it('handlerUrl fulfills with routes with string and regex matches', (done) => {
-    a = 0;
-    eventBus.trigger('changeUrl', '1', 'x=2');
-    setTimeout(() => assert.isOk(a === 5, 'a has been incremented'), 0);
-    setTimeout(done, 0);
+  it('Конструктор', () => {
+    assert.isOk((new Router()) instanceof Router);
   });
-  it('handlerUrl fulfills with routes with regex and function matches', (done) => {
-    a = 0;
-    eventBus.trigger('changeUrl', 'x=2', 'value');
-    setTimeout(() => assert.isOk(a === 4, 'a has been incremented'), 0);
-    setTimeout(done, 0);
+  it('Принимает 1 аргумент', () => {
+    assert.isOk(Router.length === 1);
   });
-  it('makes several jumps', (done) => {
-    a = 0;
-    setTimeout(() => eventBus.trigger('changeUrl', '1', 'x=2'), 0);
-    setTimeout(() => assert.isOk(a === 5, 'a has been incremented'), 0);
-    setTimeout(() => eventBus.trigger('changeUrl', 'x=2', '1'), 0);
-    setTimeout(() => assert.isOk(a === 9, 'a has been incremented'), 0);
-    setTimeout(done, 0);
+  it('Работает c паттернами-строками', function(done) {
+    window.location.href.substr(0, window.location.href.indexOf('#'))
+    var routes = [{
+      match: 'string',
+      onEnter: () => a++
+    }];
+    var mainRouter = new Router(routes);
+    var a = 1;
+    assert.isOk(a === 1);
+    window.location.hash = 'string';
+    setTimeout(function() {
+      assert.isOk(a === 2);
+      done();
+    }, 0)
   });
-  it('handlers fulfill one by one', (done) => {
-    a = 0;
-    setTimeout(() => eventBus.trigger('changeUrl', 'oneByOneCallHandlers-oldUrl', 'oneByOneCallHandlers-newUrl'), 0);
-    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
-    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled'), 75);
-    setTimeout(() => assert.isOk(a === 4, 'onBeforeEnter handler has fulfilled'), 125);
-    setTimeout(() => assert.isOk(a === 6, 'onEnter handler has fulfilled'), 175);
-    setTimeout(done, 200);
+  it('Работает c паттернами-функциями', function(done) {
+    window.location.href.substr(0, window.location.href.indexOf('#'))
+    var routes = [{
+      match: (text) => text === 'about',
+      onEnter: () => a += 100
+    }];
+    var mainRouter = new Router(routes);
+    var a = 1;
+    assert.isOk(a === 1);
+    window.location.hash = 'about';
+    setTimeout(function() {
+      assert.isOk(a === 101);
+      done();
+    }, 0)
   });
-  it('handlers do not fulfill after reject in onLeave', (done) => {
-    a = 0;
-    setTimeout(() => eventBus.trigger('changeUrl', 'rejectOnLeave', 'oneByOneCallHandlers-newUrl'), 0);
-    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
-    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled with rejected state'), 75);
-    setTimeout(() => assert.isOk(a === 3, 'onBeforeEnter handler has not fulfilled'), 125);
-    setTimeout(() => assert.isOk(a === 3, 'onEnter handler has not fulfilled'), 175);
-    setTimeout(done, 200);
+  it('Работает c паттернами-RegExp', function(done) {
+    window.location.href.substr(0, window.location.href.indexOf('#'))
+    var routes = [{
+      match: /cit./,
+      onEnter: () => a += 200
+    }];
+    var mainRouter = new Router(routes);
+    var a = 1;
+    assert.isOk(a === 1);
+    window.location.hash = 'city';
+    setTimeout(function() {
+      assert.isOk(a === 201);
+      done();
+    }, 0)
   });
-  it('handlers do not fulfill after reject in onBeforeEnter', (done) => {
-    a = 0;
-    setTimeout(() => eventBus.trigger('changeUrl', 'oneByOneCallHandlers-newUrl', 'rejectOnBeforeEnter'), 0);
-    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
-    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled'), 75);
-    setTimeout(() => assert.isOk(a === 4, 'onBeforeEnter handler has fulfilled with rejected state'), 125);
-    setTimeout(() => assert.isOk(a === 4, 'onEnter handler has not fulfilled'), 175);
-    setTimeout(done, 200);
+  it('Вызывает последовательно необходимые функции', function(done) {
+    window.location.href.substr(0, window.location.href.indexOf('#'))
+    var routes = [{
+      name: 'about',
+      match: (text) => text === 'about',
+      onBeforeEnter: () => a += 'ab',
+      onEnter: () => a += 'ae',
+      onLeave: () => a += 'al'
+    },
+      {
+        name: 'city',
+        match: 'city',
+        onBeforeEnter: () => a += 'cb',
+        onEnter: () => a += 'ce',
+        onLeave: () => a += 'cl'
+      }
+    ];
+    var mainRouter = new Router(routes);
+    var a = '';
+    assert.isOk(a === '');
+    window.location.hash = 'city';
+    window.location.hash = 'about';
+    setTimeout(function() {
+      assert.isOk(a === 'cbceclabae');
+      done();
+    }, 0)
   });
 });
-
 
 mocha.run();

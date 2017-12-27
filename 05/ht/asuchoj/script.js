@@ -1,4 +1,16 @@
 'use strict';
+/*шаблонизатор*/
+let compileTemplate = function (tp) {
+  let newTp = tp;
+  return function (el, data, ) {
+    for (let key in data) {
+      let regexp = new RegExp("{{" + key + "}}");
+      newTp = newTp.replace(regexp,data[key]);
+    }
+    return el.innerHTML = newTp;
+  }
+}
+
 function EventBus() {
     this.listeners = {};
 }
@@ -51,86 +63,54 @@ EventBus.prototype.once = function(eventName, cb){
     this.on(eventName, addOnceCallback);
 };
 
-/*шаблонизатор*/
-let compileTemplate = function (tp) {
-  let newTp = tp;
-  return function (el, data, ) {
-    for (let key in data) {
-      let regexp = new RegExp("{{" + key + "}}");
-      newTp = newTp.replace(regexp,data[key]);
-    }
-    return el.innerHTML = newTp;
-  }
-}
-
 /*роутер*/
-
-function Router(routes, eventBus) {
-  this.routes = routes || [];
-  this.init(eventBus);
+/**
+ * Функция для добавления и обработки роутов на странице
+ * @param {*} routeParams массив параметров для обработки роутов
+ */
+function Router(routeParams) {
+  this.routes = routeParams || [];
+  this.currentRoute;
+  this.previousRoute;
+  this.currentParams;
+  this.previousParams;
+  window.addEventListener('hashchange', (event) => {
+    this.handler(window.location.hash);
+  })
+  this.handler(window.location.hash);
 }
 
-Router.prototype.init = function(eventBus) {
-  if (eventBus) {
-    eventBus.on('changeUrl', (oldUrl, newUrl) => {
-      this.handleUrl(oldUrl, newUrl);
-    });
-  }
-};
+Router.prototype = {
+  handler: function(hash) {
+    this.previousRoute = this.currentRoute;
+    this.previousParams = this.currentParams;
+    this.currentRoute = this.findNewRoute(hash);
+    this.launchHandlers();
+  },
+  findNewRoute: function(hash) {
+    hash = hash.slice(1);
 
-Router.prototype.handleUrl = function(oldUrl, newUrl) {
-  var previousRoute = this.findRoute(oldUrl);
-  var nextRoute = this.findRoute(newUrl);
-
-  var oldUrlParams = this.getUrlParams(oldUrl);
-  var newUrlParams = this.getUrlParams(newUrl);
-
-  return Promise.resolve()
-    .then(() => {
-      return previousRoute &&
-        previousRoute.onLeave &&
-        (oldUrlParams ? previousRoute.onLeave(oldUrlParams) : previousRoute.onLeave());
-    })
-    .then(() => {
-      return nextRoute &&
-        nextRoute.onBeforeEnter &&
-        (newUrlParams ? nextRoute.onBeforeEnter(newUrlParams) : nextRoute.onBeforeEnter());
-    })
-    .then(() => {
-      return nextRoute &&
-        nextRoute.onEnter &&
-        (newUrlParams ? nextRoute.onEnter(newUrlParams) : nextRoute.onEnter());
-    });
-};
-
-Router.prototype.findRoute = function(url) {
-  return this.routes.find((route) => {
-    if (typeof route.match === 'string') {
-      return route.match === url;
+    for (var i = 0; i < this.routes.length; i++) {
+      var element = this.routes[i];
+      if (typeof(element.match) == "string" && element.match === hash) {
+        this.currentParams = '';
+        return element;
+      }
+      if (typeof(element.match) == "function" && element.match(hash)) {
+        this.currentParams = '';
+        return element;
+      }
+      if ((element.match instanceof RegExp) && element.match.test(hash)) {
+        this.currentParams = hash.match(element.match) || [];
+        this.currentParams.splice(0, 1);
+        return element;
+      }
     }
-
-    if (route.match instanceof RegExp) {
-      return route.match.test(url);
-    }
-
-    if (typeof route.match === 'function') {
-      return route.match(url);
-    }
-  });
-};
-
-Router.prototype.getUrlParams = function(url) {
-  var route = this.findRoute(url);
-
-  if (!route) {
-    return;
+  },
+  launchHandlers() {
+    Promise.resolve()
+      .then(() => { this.previousRoute && this.previousRoute.onLeave && this.previousRoute.onLeave(this.previousParams) })
+      .then(() => { this.currentRoute && this.currentRoute.onBeforeEnter && this.currentRoute.onBeforeEnter(this.currentParams) })
+      .then(() => { this.currentRoute && this.currentRoute.onEnter && this.currentRoute.onEnter(this.currentParams) });
   }
-
-  if (route.match instanceof RegExp) {
-    return url.match(route.match);
-  }
-
-  if (typeof route.match === 'function') {
-    return route.match(url);
-  }
-};
+}
