@@ -9,8 +9,7 @@ let compileTemplate = function (tp) {
     }
     return el.innerHTML = newTp;
   }
-}
-
+};
 function EventBus() {
     this.listeners = {};
 }
@@ -64,11 +63,10 @@ EventBus.prototype.once = function(eventName, cb){
 };
 
 /*роутер*/
-
 let Router = function (options) {
-  options ? this.routes = options.routes : this.routes = []
+  options ? this.routes = options.routes : this.routes = [];
   this.init();
-}
+};
 
 Router.prototype = {
   init: function () {
@@ -104,7 +102,6 @@ Router.prototype = {
       params = url.match(route.match);
     }
     params.shift();
-
     return params;
   },
 

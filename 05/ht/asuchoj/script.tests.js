@@ -384,8 +384,8 @@ describe('Router 2', () => {
       },
     ]}
 
-/*  var eventBus = new EventBus();*/
-  var router = new Router(r);
+  var eventBus = new EventBus();
+  var router = new Router(r,eventBus);
 
   it('is a function', () => assert.isOk(typeof (Router) === 'function'));
   it('has .init method', () => assert.isOk(typeof ((new Router()).init) === 'function'));
