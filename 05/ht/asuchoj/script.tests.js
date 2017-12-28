@@ -255,88 +255,307 @@ describe("new EventBus", function() {
   });
 })
 
-describe('Router', function() {
-  it('Функция', () => {
-    assert.isOk(typeof(Router) === 'function');
-  });
-  it('Конструктор', () => {
-    assert.isOk((new Router()) instanceof Router);
-  });
-  it('Принимает 1 аргумент', () => {
-    assert.isOk(Router.length === 1);
-  });
-  it('Работает c паттернами-строками', function(done) {
-    window.location.href.substr(0, window.location.href.indexOf('#'))
-    var routes = [{
-      match: 'string',
-      onEnter: () => a++
-    }];
-    var mainRouter = new Router(routes);
-    var a = 1;
-    assert.isOk(a === 1);
-    window.location.hash = 'string';
-    setTimeout(function() {
-      assert.isOk(a === 2);
-      done();
-    }, 0)
-  });
-  it('Работает c паттернами-функциями', function(done) {
-    window.location.href.substr(0, window.location.href.indexOf('#'))
-    var routes = [{
-      match: (text) => text === 'about',
-      onEnter: () => a += 100
-    }];
-    var mainRouter = new Router(routes);
-    var a = 1;
-    assert.isOk(a === 1);
-    window.location.hash = 'about';
-    setTimeout(function() {
-      assert.isOk(a === 101);
-      done();
-    }, 0)
-  });
-  it('Работает c паттернами-RegExp', function(done) {
-    window.location.href.substr(0, window.location.href.indexOf('#'))
-    var routes = [{
-      match: /cit./,
-      onEnter: () => a += 200
-    }];
-    var mainRouter = new Router(routes);
-    var a = 1;
-    assert.isOk(a === 1);
-    window.location.hash = 'city';
-    setTimeout(function() {
-      assert.isOk(a === 201);
-      done();
-    }, 0)
-  });
-  it('Вызывает последовательно необходимые функции', function(done) {
-    window.location.href.substr(0, window.location.href.indexOf('#'))
-    var routes = [{
-      name: 'about',
-      match: (text) => text === 'about',
-      onBeforeEnter: () => a += 'ab',
-      onEnter: () => a += 'ae',
-      onLeave: () => a += 'al'
-    },
+/*describe('Router 1', () => {
+  let r = {
+    routes:[
+      {
+        name: 'index',
+        match: '',
+        onBeforeEnter: () => console.log('onBeforeEnter index'),
+        onEnter: () => console.log('onEnter index'),
+        onLeave: () => console.log('onLeave index'),
+      },
       {
         name: 'city',
-        match: 'city',
-        onBeforeEnter: () => a += 'cb',
-        onEnter: () => a += 'ce',
-        onLeave: () => a += 'cl'
-      }
-    ];
-    var mainRouter = new Router(routes);
-    var a = '';
-    assert.isOk(a === '');
-    window.location.hash = 'city';
-    window.location.hash = 'about';
-    setTimeout(function() {
-      assert.isOk(a === 'cbceclabae');
-      done();
-    }, 0)
+        match: /city=(.+)/,
+        onBeforeEnter: (city) => console.log(`onBeforeEnter city:${city}`),
+        onEnter: (city) => console.log(`onEnter city:${city}`),
+        onLeave: (city) => console.log(`onLeave city:${city}`),
+      },
+      {
+        name: 'about',
+        match: (text) => text === 'about',
+        onBeforeEnter: () => console.log(`onBeforeEnter about`),
+        onEnter: () => console.log(`onEnter about`),
+        onLeave: () => console.log(`onLeave about`),
+      },
+    ]
+  }
+  let router = new Router(r);
+  it('функция', () => {
+    assert.isOk(typeof Router === 'function');
+  });
+  it('находит нужный роут', () => {
+    let url1 = 'router/index.html#about';
+    let rout1 = router.findNewActiveRoute(url1);
+    assert.isOk(rout1.name === 'about');
+    let url2 = 'router/index.html#city=Minsk';
+    let rout2 = router.findNewActiveRoute(url2);
+    assert.isOk(rout2.name === 'city');
+  });
+  it('правильно обрабатывает данные из rout', () => {
+    let url1 = 'router/index.html#about';
+    let url2 = 'router/index.html#';
+    console.log('------------------');
+    router.handleUrl(url1);
+    router.handleUrl(url2);
+  });
+})*/
+
+
+describe('Router 2', () => {
+  var a = 0;
+
+  var asyncResolveFunc = function(x) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        a += x;
+        resolve();
+      }, 50);
+    });
+  };
+
+  var asyncRejectFunc = function(x) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        a += x;
+        reject();
+      }, 50);
+    });
+  };
+
+  var r = {
+    routes:[
+      {
+        name: '1',
+        match: '1',
+        onBeforeEnter: () => a++,
+        onEnter: () => a++,
+        onLeave: () => a++,
+      },
+      {
+        name: '2',
+        match: /x=(\d)/,
+        onBeforeEnter: (regexMatch) => a += +regexMatch[1],
+        onEnter: (regexMatch) => a += +regexMatch[1],
+        onLeave: (regexMatch) => a += +regexMatch[1],
+      },
+      {
+        name: '3',
+        match: (x) => x === 'value',
+        onBeforeEnter: () => a++,
+        onEnter: () => a++,
+        onLeave: () => a++,
+      },
+      {
+        name: 'oneByOneCallHandlers-oldUrl',
+        match: 'oneByOneCallHandlers-oldUrl',
+        onBeforeEnter: () => asyncResolveFunc(1),
+        onEnter: () => asyncResolveFunc(2),
+        onLeave: () => asyncResolveFunc(3),
+      },
+      {
+        name: 'oneByOneCallHandlers-newUrl',
+        match: 'oneByOneCallHandlers-newUrl',
+        onBeforeEnter: () => asyncResolveFunc(1),
+        onEnter: () => asyncResolveFunc(2),
+        onLeave: () => asyncResolveFunc(3),
+      },
+      {
+        name: 'rejectOnLeave',
+        match: 'rejectOnLeave',
+        onBeforeEnter: () => asyncResolveFunc(1),
+        onEnter: () => asyncResolveFunc(2),
+        onLeave: () => asyncRejectFunc(3),
+      },
+      {
+        name: 'rejectOnBeforeEnter',
+        match: 'rejectOnBeforeEnter',
+        onBeforeEnter: () => asyncRejectFunc(1),
+        onEnter: () => asyncResolveFunc(2),
+        onLeave: asyncResolveFunc(3),
+      },
+      {
+        name: 'rejectOnEnter',
+        match: 'rejectOnEnter',
+        onBeforeEnter: () => asyncResolveFunc(1),
+        onEnter: () => asyncRejectFunc(2),
+        onLeave: asyncResolveFunc(3),
+      },
+    ]}
+
+/*  var eventBus = new EventBus();*/
+  var router = new Router(r);
+
+  it('is a function', () => assert.isOk(typeof (Router) === 'function'));
+  it('has .init method', () => assert.isOk(typeof ((new Router()).init) === 'function'));
+  it('has .handleUrl method', () => assert.isOk(typeof ((new Router()).handleUrl) === 'function'));
+  it('handlers fulfill asynchronously', (done) => {
+    a = 0;
+    eventBus.trigger('changeUrl', '1', 'x=2');
+    assert(a === 0, 'a was not changed');
+    a++;
+    assert(a === 1, 'a was changed synchronously');
+    setTimeout(() => assert.isOk(a === 6, 'a was changed asynchronously'), 0);
+    setTimeout(done, 0);
+  });
+  it('handlerUrl fulfills with routes with string and regex matches', (done) => {
+    a = 0;
+    eventBus.trigger('changeUrl', '1', 'x=2');
+    setTimeout(() => assert.isOk(a === 5, 'a has been incremented'), 0);
+    setTimeout(done, 0);
+  });
+  it('handlerUrl fulfills with routes with regex and function matches', (done) => {
+    a = 0;
+    eventBus.trigger('changeUrl', 'x=2', 'value');
+    setTimeout(() => assert.isOk(a === 4, 'a has been incremented'), 0);
+    setTimeout(done, 0);
+  });
+  it('makes several jumps', (done) => {
+    a = 0;
+    setTimeout(() => eventBus.trigger('changeUrl', '1', 'x=2'), 0);
+    setTimeout(() => assert.isOk(a === 5, 'a has been incremented'), 0);
+    setTimeout(() => eventBus.trigger('changeUrl', 'x=2', '1'), 0);
+    setTimeout(() => assert.isOk(a === 9, 'a has been incremented'), 0);
+    setTimeout(done, 0);
+  });
+  it('handlers fulfill one by one', (done) => {
+    a = 0;
+    setTimeout(() => eventBus.trigger('changeUrl', 'oneByOneCallHandlers-oldUrl', 'oneByOneCallHandlers-newUrl'), 0);
+    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
+    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled'), 75);
+    setTimeout(() => assert.isOk(a === 4, 'onBeforeEnter handler has fulfilled'), 125);
+    setTimeout(() => assert.isOk(a === 6, 'onEnter handler has fulfilled'), 175);
+    setTimeout(done, 200);
+  });
+  it('handlers do not fulfill after reject in onLeave', (done) => {
+    a = 0;
+    setTimeout(() => eventBus.trigger('changeUrl', 'rejectOnLeave', 'oneByOneCallHandlers-newUrl'), 0);
+    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
+    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled with rejected state'), 75);
+    setTimeout(() => assert.isOk(a === 3, 'onBeforeEnter handler has not fulfilled'), 125);
+    setTimeout(() => assert.isOk(a === 3, 'onEnter handler has not fulfilled'), 175);
+    setTimeout(done, 200);
+  });
+  it('handlers do not fulfill after reject in onBeforeEnter', (done) => {
+    a = 0;
+    setTimeout(() => eventBus.trigger('changeUrl', 'oneByOneCallHandlers-newUrl', 'rejectOnBeforeEnter'), 0);
+    setTimeout(() => assert.isOk(a === 0, 'a has not been incremented'), 0);
+    setTimeout(() => assert.isOk(a === 3, 'onLeave handler has fulfilled'), 75);
+    setTimeout(() => assert.isOk(a === 4, 'onBeforeEnter handler has fulfilled with rejected state'), 125);
+    setTimeout(() => assert.isOk(a === 4, 'onEnter handler has not fulfilled'), 175);
+    setTimeout(done, 200);
   });
 });
+
+/*describe('Router 3', () => {
+
+
+
+  let r = {
+    routes: [{
+      name: 'empty',
+      match: "",
+      onBeforeEnter: () => {},
+      onEnter: () => {},
+      onLeave: () => {}
+    }]
+  };
+
+  let router = new Router(r)
+
+  it('Функция', () => {
+    assert.isOk(typeof Router === "function");
+  })
+  it('Конструктор', () => {
+    assert.isOk(router instanceof Router);
+  })
+  it('Есть метод findNewRoute', () => {
+    assert.isOk(typeof router.findNewActiveRoute === "function");
+  })
+  it('Есть метод hashCheck', () => {
+    assert.isOk(typeof router.handleUrl === "function");
+  })
+  it('Работает при создании без агрументов', () => {
+    assert.isOk((new Router()) instanceof Router);
+  })
+  it('Работает при отсутсвии некоторых методов', (done) => {
+    let string = ""
+    let myRouter = new Router({
+      routes: [{
+        name: 'noMethods',
+        match: 'noMethods',
+        onEnter: () => {
+          string += "Enter"
+        }
+      }]
+    });
+    setTimeout(done, 50);
+    setTimeout(() => myRouter.handleUrl("#noMethods"), 10);
+    setTimeout(() => assert.isOk(string === "Enter"), 10);
+  })
+ it('Верная последовательность выполнения роутов', (done) => {
+    let string = ""
+    let myRouter = new Router({
+      routes: [{
+        name: 'checkRout',
+        match: 'changeString',
+        onLeave: () => {
+          string += "Leave"
+        },
+        onBeforeEnter: () => {
+          string += "BeforeEnter"
+        },
+        onEnter: () => {
+          string += "Enter"
+        }
+      }, {
+        name: 'empty',
+        match: "",
+        onLeave: () => {
+          string += "Leave"
+        },
+        onBeforeEnter: () => {
+          string += "BeforeEnter"
+        },
+        onEnter: () => {
+          string = ""
+        }
+      }]
+    });
+    setTimeout(done, 10);
+    setTimeout(() => myRouter.handleUrl("#"), 10);
+    setTimeout(() => myRouter.handleUrl("#changeString"), 10);
+    setTimeout(() => assert.isOk(string === "LeaveBeforeEnterEnter"), 10);
+  })
+  it('Работает со строками', (done) => {
+    let string = ""
+    let myRouter = new Router({
+      routes: [{
+        name: 'string',
+        match: /string=(.+)/,
+        onEnter: (str) => string = str
+      }]
+    });
+    setTimeout(done, 10);
+    setTimeout(() => myRouter.hashCheck("#string=helloWorld"), 10);
+    setTimeout(() => assert.isOk(string === "helloWorld"), 10);
+  })
+  it('Работает с функциями', (done) => {
+    let string = ""
+    let myRouter = new Router({
+      routes: [{
+        name: 'function',
+        match: (text) => text + " and JavaScript",
+        onBeforeEnter: (text) => string = text
+      }]
+    });
+    setTimeout(done, 10);
+    setTimeout(() => myRouter.handleUrl("#helloWorld"), 10);
+    setTimeout(() => assert.isOk(string === "helloWorld and JavaScript"), 10);
+  })
+})*/
+
+
 
 mocha.run();

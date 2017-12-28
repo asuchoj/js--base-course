@@ -64,53 +64,69 @@ EventBus.prototype.once = function(eventName, cb){
 };
 
 /*роутер*/
-/**
- * Функция для добавления и обработки роутов на странице
- * @param {*} routeParams массив параметров для обработки роутов
- */
-function Router(routeParams) {
-  this.routes = routeParams || [];
-  this.currentRoute;
-  this.previousRoute;
-  this.currentParams;
-  this.previousParams;
-  window.addEventListener('hashchange', (event) => {
-    this.handler(window.location.hash);
-  })
-  this.handler(window.location.hash);
+
+let Router = function (options) {
+  options ? this.routes = options.routes : this.routes = []
+  this.init();
 }
 
 Router.prototype = {
-  handler: function(hash) {
-    this.previousRoute = this.currentRoute;
-    this.previousParams = this.currentParams;
-    this.currentRoute = this.findNewRoute(hash);
-    this.launchHandlers();
+  init: function () {
+    // 1. Подписать this.handleUrl на изменения url
+    window.addEventListener('hashchange', () => this.handleUrl(window.location.hash));
+    // 2. Выполнить this.handleUrl
+    this.handleUrl(window.location.hash);
   },
-  findNewRoute: function(hash) {
-    hash = hash.slice(1);
+  findPreviousActiveRoute: function () {
+    // Найти роут с которого уходим
+    return this.currentRoute;
+  },
+  findNewActiveRoute: function (url) {
+    url = url.split('#').pop();
+    // Найти роут на который переходим
+    let route = this.routes.find((routeItem) => {
+      if (typeof routeItem.match === 'string') {
+        return url === routeItem.match;
+      } else if (typeof routeItem.match === 'function') {
+        return routeItem.match(url);
+      } else if (routeItem.match instanceof RegExp) {
+        return url.match(routeItem.match);
+      }
+    });
+    return route;
+  },
+  getRouteParams(route, url) {
+    let params;
 
-    for (var i = 0; i < this.routes.length; i++) {
-      var element = this.routes[i];
-      if (typeof(element.match) == "string" && element.match === hash) {
-        this.currentParams = '';
-        return element;
-      }
-      if (typeof(element.match) == "function" && element.match(hash)) {
-        this.currentParams = '';
-        return element;
-      }
-      if ((element.match instanceof RegExp) && element.match.test(hash)) {
-        this.currentParams = hash.match(element.match) || [];
-        this.currentParams.splice(0, 1);
-        return element;
-      }
+    if(!route && !url){
+      params = []
+    } else {
+      params = url.match(route.match);
     }
+    params.shift();
+
+    return params;
   },
-  launchHandlers() {
+
+  handleUrl: function (url) {
+    // Найти текущий роут
+    let previousRoute = this.findPreviousActiveRoute();
+
+    // Найти новый роут
+    let newRoute = this.findNewActiveRoute(url);
+
+    let routeParams = this.getRouteParams(newRoute, url);
+
+    // Если есть роут с которого уходим - выполнить его .onLeave
     Promise.resolve()
-      .then(() => { this.previousRoute && this.previousRoute.onLeave && this.previousRoute.onLeave(this.previousParams) })
-      .then(() => { this.currentRoute && this.currentRoute.onBeforeEnter && this.currentRoute.onBeforeEnter(this.currentParams) })
-      .then(() => { this.currentRoute && this.currentRoute.onEnter && this.currentRoute.onEnter(this.currentParams) });
-  }
-}
+      .then(() => previousRoute && previousRoute.onLeave && previousRoute.onLeave(...this.currentRouteParams))
+      // После этого выполнить .onBeforeEnter для нового активного роута
+      .then(() => newRoute && newRoute.onBeforeEnter && newRoute.onBeforeEnter(...routeParams))
+      // После этого выполнить .onEnter для ногового активного роута ( только если с .onBeforeEnter все ок)
+      .then(() => newRoute && newRoute.onEnter && newRoute.onEnter(...routeParams))
+      .then(() => {
+        this.currentRoute = newRoute;
+        this.currentRouteParams = routeParams;
+      })
+  },
+};
