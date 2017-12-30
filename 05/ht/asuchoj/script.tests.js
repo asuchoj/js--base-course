@@ -253,9 +253,9 @@ describe("new EventBus", function() {
       assert.equal(1, 1);
     });
   });
-})
+});
 
-/*describe('Router 1', () => {
+describe('Router 1', () => {
   let r = {
     routes:[
       {
@@ -280,7 +280,7 @@ describe("new EventBus", function() {
         onLeave: () => console.log(`onLeave about`),
       },
     ]
-  }
+  };
   let router = new Router(r);
   it('функция', () => {
     assert.isOk(typeof Router === 'function');
@@ -300,9 +300,9 @@ describe("new EventBus", function() {
     router.handleUrl(url1);
     router.handleUrl(url2);
   });
-})*/
+});
 
-
+/*
 describe('Router 2', () => {
   var a = 0;
 
@@ -448,7 +448,7 @@ describe('Router 2', () => {
   });
 });
 
-/*describe('Router 3', () => {
+describe('Router 3', () => {
 
 
 
@@ -554,7 +554,7 @@ describe('Router 2', () => {
     setTimeout(() => myRouter.handleUrl("#helloWorld"), 10);
     setTimeout(() => assert.isOk(string === "helloWorld and JavaScript"), 10);
   })
-})*/
+});*/
 
 
 
