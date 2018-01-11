@@ -4,9 +4,12 @@ let compileTemplate = function(tp) {
     let newTp = tp;
     return function(el, data, ) {
         for (let key in data) {
-            let regexp = new RegExp("{{" + key + "}}");
-            newTp = newTp.replace(regexp, data[key]);
+            if(data.hasOwnProperty(key)){
+                let regexp = new RegExp("{{" + key + "}}");
+                newTp = newTp.replace(regexp, data[key]);
+            }
         }
+
         return el.innerHTML = newTp;
     }
 };
@@ -21,22 +24,28 @@ EventBus.prototype.on = function(eventName, cb) {
 EventBus.prototype.off = function(eventName, cb) {
     if (!eventName && cb) {
         for (let key in this.listeners) {
-            this.listeners[key].forEach((el) => {
-                let newArr = [];
-                if (el !== cb) {
-                    newArr.push(el)
-                }
-                return this.listeners[key] = newArr;
-            })
-        }
-    }
-    if (eventName && !cb) {
-        for (let key in this.listeners) {
-            if (this.listeners[key] === this.listeners[eventName]) {
-                this.listeners[eventName] = undefined;
+            if(this.listeners.hasOwnProperty(key)){
+                this.listeners[key].forEach((el) => {
+                    let newArr = [];
+                    if (el !== cb) {
+                        newArr.push(el)
+                    }
+                    return this.listeners[key] = newArr;
+                })
             }
         }
     }
+
+    if (eventName && !cb) {
+        for (let key in this.listeners) {
+            if(this.listeners.hasOwnProperty(key)){
+                if (this.listeners[key] === this.listeners[eventName]) {
+                    this.listeners[eventName] = undefined;
+                }
+            }
+        }
+    }
+
     if (eventName && cb) {
         let newArr = [];
         if (cb === undefined) return;
@@ -47,10 +56,12 @@ EventBus.prototype.off = function(eventName, cb) {
         });
         return this.listeners[eventName] = newArr;
     }
+
     if (!eventName && !cb) {
         return this.listeners = {};
     }
 };
+
 EventBus.prototype.trigger = function(eventName, ...data) {
     (this.listeners[eventName] || []).forEach(cb => cb.apply(this, data))
 };
@@ -81,7 +92,7 @@ Router.prototype = {
     },
 
     findNewActiveRoute: function(url) {
-        let r = this.routes.find((routeItem) => {
+      return this.routes.find((routeItem) => {
             if (typeof routeItem.match === 'string') {
                 return url === routeItem.match;
             } else if (typeof routeItem.match === 'function') {
@@ -90,7 +101,6 @@ Router.prototype = {
                 return url.match(routeItem.match);
             }
         });
-        return r;
     },
     getRouteParams(route, url) {
         let params;
@@ -109,12 +119,13 @@ Router.prototype = {
         let routeParams = this.getRouteParams(newRoute, url);
 
         Promise.resolve()
-            .then(() => previousRoute && previousRoute.onLeave && previousRoute.onLeave(...this.currentRouteParams))
-            .then(() => newRoute && newRoute.onBeforeEnter && newRoute.onBeforeEnter(...routeParams))
-            .then(() => newRoute && newRoute.onEnter && newRoute.onEnter(...routeParams))
-            .then(() => {
-                this.currentRoute = newRoute;
-                this.currentRouteParams = routeParams;
-            })
+          .then(() => previousRoute && previousRoute.onLeave && previousRoute.onLeave(...this.currentRouteParams))
+          .then(() => newRoute && newRoute.onBeforeEnter && newRoute.onBeforeEnter(...routeParams))
+          .then(() => newRoute && newRoute.onEnter && newRoute.onEnter(...routeParams))
+          .then(() => {
+            this.currentRoute = newRoute;
+            this.currentRouteParams = routeParams;
+        })
+          .catch(console.log)
     },
 };
