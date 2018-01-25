@@ -36,7 +36,7 @@ gulp.task('style:build', function () {
 
 gulp.task('js:build', function() {
     return browserify({
-        entries: ['./assets/javascripts/components/npp.js'],
+        entries: ['./assets/javascripts/components/controller.js'],
         debug: true
     })
         .transform(babelify.configure({

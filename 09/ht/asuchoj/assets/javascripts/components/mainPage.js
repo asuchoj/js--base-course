@@ -1,0 +1,1 @@
+export let addTwo = (a, b) => a + b;
