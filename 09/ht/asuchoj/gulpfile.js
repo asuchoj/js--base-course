@@ -1,89 +1,73 @@
-let src = `app`, // папка проекта
-  out = `desc`, // папка результат
-  css = `${src}/css/*.css`, // все файлы стилей
-  script = [`${src}/js/app.js`], // точка входа babel
-  scriptDIR = `${src}/js/*.js`, //все скрипты
-  html = `${src}/index.html`, // все скрипты
-  other = `${src}/img/**`; // остальные файлы
+'use strict';
 
-// `npm i -D gulp gulp-newer gulp-sourcemaps gulp-error-notifier gulp-concat-css gulp-clean-css gulp-uglify browser-sync babelify browserify vinyl-source-stream gulp-rename vinyl-buffer gulp-debug gulp-line-ending-corrector del`
+var gulp = require('gulp'),
+    csso = require('gulp-csso'),
+    watch = require('gulp-watch'),
+    babelify = require('babelify'),
+    uglify = require('gulp-uglify'),
+    concat = require('gulp-concat'),
+    rigger = require('gulp-rigger'),
+    buffer = require('vinyl-buffer'),
+    browserify = require("browserify"),
+    imagemin = require('gulp-imagemin'),
+   /* cssmin = require('gulp-minify-css'),*/
+    browserSync = require("browser-sync"),
+    pngquant = require('imagemin-pngquant'),
+    sourcemaps = require('gulp-sourcemaps'),
+    /*prefixer = require('gulp-autoprefixer'),*/
+    source = require("vinyl-source-stream"),
+    reload = browserSync.reload;
 
-const gulp = require(`gulp`),
-  newer = require(`gulp-newer`),
-  sourcemaps = require(`gulp-sourcemaps`),
-  notify = require('gulp-error-notifier').notify,
-  concat = require(`gulp-concat-css`),
-  cleanCSS = require(`gulp-clean-css`),
-  uglify = require('gulp-uglify'),
-  browserSync = require(`browser-sync`).create(),
-  babelify = require('babelify'),
-  browserify = require("browserify"),
-  source = require("vinyl-source-stream"),
-  rename = require('gulp-rename'),
-  buffer = require('vinyl-buffer'),
-  lec = require(`gulp-line-ending-corrector`),
-  del = require(`del`);
+gulp.task('default', ['build', 'watch']);
 
-gulp.task(`html`, () => {
-  return gulp.src(html)
-    .pipe(gulp.dest(out));
+gulp.task('html:build', function () {
+    gulp.src('assets/*.html')
+        .pipe(gulp.dest('./public/'))
+        .pipe(reload({stream: true}));
 });
 
-
-gulp.task(`copy`, () => {
-  return gulp.src(other, {since: gulp.lastRun(`copy`), base: src})
-    .pipe(newer(out))
-    .pipe(gulp.dest(out));
+gulp.task('style:build', function () {
+	gulp.src('./assets/styles/*.css')
+        .pipe(concat('style.css'))
+		.pipe(csso())
+		.pipe(gulp.dest('./public/css/'))
+        .pipe(reload({stream: true}));
 });
 
-
-
-gulp.task(`style`, () => {
-  return gulp.src(css)
-    .pipe(sourcemaps.init())
-    .pipe(concat(`style.css`))
-    .pipe(cleanCSS())
-    .pipe(rename({suffix: '.min'}))
-    .pipe(sourcemaps.write())
-    .pipe(gulp.dest(out));
-});
-
-gulp.task(`script`, () => {
-  return browserify({
-    entries: script
-  })
-    .transform(babelify.configure({
-      presets: [`es2015`]
-    }))
-    .bundle()
-    .on('error', function (err) {
-      console.log(err.stack);
-      notify(new Error(err));
-      this.emit(`end`);
+gulp.task('js:build', function() {
+    return browserify({
+        entries: ['./assets/javascripts/components/npp.js'],
+        debug: true
     })
-    .pipe(source(`script.js`))
-    .pipe(buffer())
-    // .pipe(uglify())
-    .pipe(lec({verbose:true, eolc: 'CRLF', encoding:'utf8'}))
-    .pipe(rename({suffix: '.min'}))
-    .pipe(gulp.dest(out));
+        .transform(babelify.configure({
+            presets : ['es2015']
+        }))
+        .bundle()
+        .pipe(source('min.js'))
+/*        .pipe(buffer())
+        .pipe(sourcemaps.init())
+        .pipe(uglify())
+        .pipe(sourcemaps.write())*/
+        .pipe(gulp.dest('./public/js/'))
+/*        .pipe(reload({stream: true}));*/
 });
 
-gulp.task(`clean`, () => del(out));
-
-gulp.task(`render`, gulp.series(`clean`, gulp.parallel(`html`, `copy`, `style`, `script`)));
-gulp.task(`watch`, () => {
-  gulp.watch(html, gulp.series(`html`));
-  gulp.watch(other, gulp.series(`copy`));
-  gulp.watch(css, gulp.series(`style`));
-  gulp.watch(scriptDIR, gulp.series(`script`));
+gulp.task('images:build', function() {
+    gulp.src('./assets/images/**/*')
+        .pipe(imagemin())
+        .pipe(gulp.dest('./public/img/'))
 });
 
-gulp.task(`serve`, () => {
-  browserSync.init({
-    server: out
-  });
-  browserSync.watch(out).on(`change`, browserSync.reload);
-});
+gulp.task('build', [
+    'html:build',
+    'js:build',
+    'style:build',
+    'images:build'
+]);
 
-gulp.task(`run`, gulp.series(`render`, gulp.parallel(`watch`, `serve`)));
+gulp.task('watch', function () {
+    gulp.watch('./assets/*.html', ['html:build']);
+	gulp.watch('./assets/styles/**/*.css', ['style:build']);
+	gulp.watch('./assets/javascripts/**/*.js', ['js:build']);
+	gulp.watch('./assets/images/**/*', ['images:build']);
+});
