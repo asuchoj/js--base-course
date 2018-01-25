@@ -1,72 +1,89 @@
-'use strict';
-let gulp = require('gulp'),
-  concatCSS = require('gulp-concat-css'),
-  concatJS = require('gulp-concat'),
-  babel = require('gulp-babel'),
+let src = `app`, // папка проекта
+  out = `desc`, // папка результат
+  css = `${src}/css/*.css`, // все файлы стилей
+  script = [`${src}/js/app.js`], // точка входа babel
+  scriptDIR = `${src}/js/*.js`, //все скрипты
+  html = `${src}/index.html`, // все скрипты
+  other = `${src}/img/**`; // остальные файлы
+
+// `npm i -D gulp gulp-newer gulp-sourcemaps gulp-error-notifier gulp-concat-css gulp-clean-css gulp-uglify browser-sync babelify browserify vinyl-source-stream gulp-rename vinyl-buffer gulp-debug gulp-line-ending-corrector del`
+
+const gulp = require(`gulp`),
+  newer = require(`gulp-newer`),
+  sourcemaps = require(`gulp-sourcemaps`),
+  notify = require('gulp-error-notifier').notify,
+  concat = require(`gulp-concat-css`),
+  cleanCSS = require(`gulp-clean-css`),
   uglify = require('gulp-uglify'),
-  pump = require('pump'),
-  cleanCSS = require('gulp-clean-css'),
-  autoPreFix = require('gulp-autoprefixer'),
-  useref = require('gulp-useref'),
-  uglyfly = require('gulp-uglyfly'),
-  assets = require("gulp-assets"),
-  connect = require('gulp-connect'),
-  livereload = require('gulp-livereload'),
-  imgemin = require('gulp-imagemin') ;
+  browserSync = require(`browser-sync`).create(),
+  babelify = require('babelify'),
+  browserify = require("browserify"),
+  source = require("vinyl-source-stream"),
+  rename = require('gulp-rename'),
+  buffer = require('vinyl-buffer'),
+  lec = require(`gulp-line-ending-corrector`),
+  del = require(`del`);
 
-
-//задача подключения локального сервера
-gulp.task('connect', function() {
-  connect.server({
-    root: 'app',
-    livereload: true
-  });
+gulp.task(`html`, () => {
+  return gulp.src(html)
+    .pipe(gulp.dest(out));
 });
 
-//html
-gulp.task('html', function () {
-  return gulp.src('app/*.html')
-    .pipe(connect.reload())
-    .pipe(useref())
-    .pipe(gulp.dest('disc/'));
+
+gulp.task(`copy`, () => {
+  return gulp.src(other, {since: gulp.lastRun(`copy`), base: src})
+    .pipe(newer(out))
+    .pipe(gulp.dest(out));
 });
 
-//js
-gulp.task('js', function (){
-  gulp.src('app/js/*.js')
-    .pipe(concatJS('myJs.js') )
-    .pipe(
-      babel({
-        presets: ['env']
+
+
+gulp.task(`style`, () => {
+  return gulp.src(css)
+    .pipe(sourcemaps.init())
+    .pipe(concat(`style.css`))
+    .pipe(cleanCSS())
+    .pipe(rename({suffix: '.min'}))
+    .pipe(sourcemaps.write())
+    .pipe(gulp.dest(out));
+});
+
+gulp.task(`script`, () => {
+  return browserify({
+    entries: script
+  })
+    .transform(babelify.configure({
+      presets: [`es2015`]
+    }))
+    .bundle()
+    .on('error', function (err) {
+      console.log(err.stack);
+      notify(new Error(err));
+      this.emit(`end`);
     })
-    )
-    .pipe(uglify())
-    .pipe(gulp.dest('disc/js'))
+    .pipe(source(`script.js`))
+    .pipe(buffer())
+    // .pipe(uglify())
+    .pipe(lec({verbose:true, eolc: 'CRLF', encoding:'utf8'}))
+    .pipe(rename({suffix: '.min'}))
+    .pipe(gulp.dest(out));
 });
 
-//css
-gulp.task('css', function () {
- return gulp.src('app/css/*.css')
-   .pipe(concatCSS('style.css')) //путь к файлам для их конкатенации
-   .pipe(autoPreFix('last 2 versions', '> 1%', 'ie 9'))
-   .pipe(cleanCSS()) // минифицирует CSS
-   .pipe(gulp.dest('disc/css')) //сохранение результата
-   .pipe(connect.reload()); //произведены изменения(для сервера)*/
-});
-//img
+gulp.task(`clean`, () => del(out));
 
-gulp.task('img',function () {
-    return gulp.src('app/img/*')
-        .pipe(imgemin())
-        .pipe(gulp.dest('disc/img'))
+gulp.task(`render`, gulp.series(`clean`, gulp.parallel(`html`, `copy`, `style`, `script`)));
+gulp.task(`watch`, () => {
+  gulp.watch(html, gulp.series(`html`));
+  gulp.watch(other, gulp.series(`copy`));
+  gulp.watch(css, gulp.series(`style`));
+  gulp.watch(scriptDIR, gulp.series(`script`));
 });
 
-//watch
-gulp.task('watch', function () {
-  gulp.watch('app/*.html', ['html']); //при изменении файлов запускает задачу transformCSS
-  gulp.watch('app/css/*.css', ['css']); //при изменении файлов запускает задачу transformCSS
-  gulp.watch('app/js/*.js', ['js']); //при изменении файлов запускает задачу transformCSS
+gulp.task(`serve`, () => {
+  browserSync.init({
+    server: out
+  });
+  browserSync.watch(out).on(`change`, browserSync.reload);
 });
 
-gulp.task('default',['connect', 'html', 'css', 'js', 'img', 'watch']);
-
+gulp.task(`run`, gulp.series(`render`, gulp.parallel(`watch`, `serve`)));
