@@ -25,7 +25,7 @@ EventBus.prototype.off = function(eventName, cb) {
     if (!eventName && cb) {
         for (let key in this.listeners) {
             if(this.listeners.hasOwnProperty(key)){
-                this.listeners[key].forEach((el) => {
+                this.listeners[key].filter((el) => {
                     let newArr = [];
                     if (el !== cb) {
                         newArr.push(el)
@@ -40,7 +40,7 @@ EventBus.prototype.off = function(eventName, cb) {
         for (let key in this.listeners) {
             if(this.listeners.hasOwnProperty(key)){
                 if (this.listeners[key] === this.listeners[eventName]) {
-                    this.listeners[eventName] = undefined;
+                    delete this.listeners[eventName];
                 }
             }
         }
