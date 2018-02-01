@@ -1,4 +1,4 @@
-"use strict";
+//создаем страниц
 function  mainPage (id, classN){
     let elem = document.createElement('div');
     elem.id = id;
@@ -32,12 +32,18 @@ function  playPage (id, classN){
     elem.id = id;
     elem.className = classN;
     elem.innerHTML = `
+
         <canvas></canvas>
+        <div>
+            <img src="../../img/BODY_human.png" class="person-img" />
+        </div>
         <button class="play_game" id="play_game"> 1 </button>
+
 `;
     document.body.appendChild(elem);
     document.querySelector('#play_game').addEventListener('click',()=>location.hash = '#replay');
 }
+
 
 function  replayPage (id, classN){
     let elem = document.createElement('div');
@@ -46,6 +52,7 @@ function  replayPage (id, classN){
     elem.innerHTML = `
         <p>возобновить игру</p>
         <button class="replay_game" id="replay_game"> 1 </button>
+        
         <p>главная</p>
         <button class="get_main_page" id="get_main_page"> 1 </button>
 `;
@@ -68,6 +75,7 @@ let router = new Router({
             playPage('playPage', 'play_page');
             newEventBus.trigger('a1');
         }
+
     }, {
         name: 'replay_game',
         match: (text) => text === 'replay',
