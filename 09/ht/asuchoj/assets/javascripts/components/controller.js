@@ -6,7 +6,7 @@ class GameArena{
     constructor(element, width, height, Person){
         this.canvas = element;
         this.ctx = this.canvas.getContext(`2d`);
-        this.person = new Person( 'player', this.ctx, 30, 30, 'red', 50, 50);
+        this.person = new Person( 'player', this.ctx, 50, 50, 50, 50);
         this.start();
     }
 
@@ -33,7 +33,7 @@ class GameArena{
 
 //обновляет состояние
     updateState() {
-        console.log('1');
+
         this.clear();
         this.person.newPos({
                 right: this.keys && this.keys[39],
@@ -60,48 +60,63 @@ newEventBus.on('a1', ()=>{
 
 
 class Person{
-    constructor(name,ctx, width, height, color = 'green', x, y ){
+    constructor(name,ctx, width, height, x, y ){
         this.name = name;
         this.ctx = ctx;
         this.width = width;
         this.height = height;
-        this.color = color;
         this.speed = 0;
-        this.angle = 0;
-        this.moveAngle = 0;
         this.x = x;
         this.y = y;
+        this.sprite = new Image();
+        this.sprite.src = 'img/bodyHuman.png';
     }
+
     update(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-/*        ctx.fillStyle = this.color;
-        ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);*/
 
+        let x_position = 0;
+        let y_position = 77;
+
+        if(this.right){
+            y_position = 205;
+        } else if(this.up){
+            y_position= 15;
+        } else if(this.down) {
+            y_position = 142;
+        }
+        ctx.drawImage(this.sprite, x_position, y_position, 50, 50, 50, 50, 50, 50);
         ctx.restore();
         return this;
     }
     newPos(options) {
-        this.speed = 0;
-        options.left && (this.speed = -5);
-        options.right && (this.speed = 5);
-        options.up && (this.speed = -5);
-        options.down && (this.speed = 5);
+        this.speed = 5;
 
-        if(options.left){
+        if(['up', 'right', 'left', 'down'].some(i => options[i])) {
+            this.up = options.up;
+            this.right = options.right;
+            this.left = options.left;
+            this.down = options.down;
+        }
+
+        if(this.left){
+            /*this.ctx.drawImage(this.sprite, 0, 77, 50, 50, 50, 50, 50, 50);*/
+            this.x += -1*this.speed;
+            this.y += 0;
+        }
+        if(this.right){
+            /*this.ctx.drawImage(this.sprite, 0, 205, 50, 50, 50, 50, 50, 50);*/
             this.x += this.speed;
             this.y += 0;
         }
-        if(options.right){
-            this.x += this.speed;
-            this.y += 0;
-        }
-        if(options.up){
+        if(this.up){
+            /*this.ctx.drawImage(this.sprite, 0, 15, 50, 50, 50, 50, 50, 50);*/
             this.x += 0;
-            this.y += this.speed;
+            this.y += -1*this.speed;
         }
-        if(options.down){
+        if(this.down){
+            /*this.ctx.drawImage(this.sprite, 0, 142, 50, 50, 50, 50, 50, 50);*/
             this.x += 0;
             this.y += this.speed;
         }

@@ -4,6 +4,8 @@ function  mainPage (id, classN){
     elem.id = id;
     elem.className = classN;
     elem.innerHTML = `
+
+
         <h1> Добро пожаловать в мою аркаду </h1>
         
         <p class="main_character"> Это ваш персонаж. Вы можете переместить его с помощью
@@ -34,9 +36,9 @@ function  playPage (id, classN){
     elem.innerHTML = `
 
         <canvas></canvas>
-        <div>
-            <img src="../../img/BODY_human.png" class="person-img" />
-        </div>
+<!--        <div class="sprite-wrapper" style="left: -3000px; top: -3000px; position: absolute;">
+            <img src="img/bodyHuman.png">
+        </div>-->
         <button class="play_game" id="play_game"> 1 </button>
 
 `;
@@ -70,7 +72,9 @@ let router = new Router({
     }, {
         name: 'play_game',
         match: (text) => text === 'play',
-        onBeforeEnter: () => document.body.innerHTML = '',
+        onBeforeEnter: () => {
+            document.body.innerHTML = '';
+            },
         onEnter: () => {
             playPage('playPage', 'play_page');
             newEventBus.trigger('a1');
