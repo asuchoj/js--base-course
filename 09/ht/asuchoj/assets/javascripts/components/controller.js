@@ -3,14 +3,21 @@ let FIELD_WIDTH = document.documentElement.clientWidth;
 let FIELD_HEIGHT = document.documentElement.clientHeight;
 
 class GameArena{
-    constructor(element, width, height, Person){
+    constructor(element, width, height, Person, Enemy) {
         this.canvas = element;
         this.ctx = this.canvas.getContext(`2d`);
-        this.person = new Person( 'player', this.ctx, 50, 50, 50, 50);
+        this.person = new Person('player', this.ctx, 50, 50, 50, 50);
+
+        this.characters = [];
+        this.characters.push(this.person);
+
+        let monster = new Enemy('enemy', this.ctx, 50, 50, 50, 50);
+        monster.right = true;
+        this.characters.push(monster);
+
         this.start();
     }
-
-//старт отрисовки игры
+//старт отрисовки игрыуч
     start() {
         this.canvas.width = FIELD_WIDTH;
         this.canvas.height = FIELD_HEIGHT;
@@ -20,7 +27,7 @@ class GameArena{
             e.preventDefault();
             this.keys = (this.keys || []);
             this.keys[e.keyCode] = (e.type === "keydown");
-        });
+        })
         window.addEventListener('keyup', (e) => {
             this.keys[e.keyCode] = (e.type === "keydown");
         })
@@ -40,8 +47,9 @@ class GameArena{
                 left: this.keys && this.keys[37],
                 up: this.keys && this.keys[38],
                 down: this.keys && this.keys[40],
-            })
-            .update(this.ctx);
+            });
+
+        this.characters.forEach((char) => char.newPos({}).update(this.ctx));
     }
 
 //очистка всего поля
@@ -54,12 +62,13 @@ class GameArena{
 
 newEventBus.on('a1', ()=>{
     let canvas = document.querySelector('canvas');
-    new GameArena(canvas, FIELD_WIDTH, FIELD_HEIGHT, Person);
+    new GameArena(canvas, FIELD_WIDTH, FIELD_HEIGHT, Person, EnemyOneLevel);
 });
 
 
 
 class Person{
+    getUrl(){ return  'img/bodyHuman.png'; }
     constructor(name,ctx, width, height, x, y ){
         this.name = name;
         this.ctx = ctx;
@@ -69,7 +78,7 @@ class Person{
         this.x = x;
         this.y = y;
         this.sprite = new Image();
-        this.sprite.src = 'img/bodyHuman.png';
+        this.sprite.src = this.getUrl();
     }
 
     update(ctx) {
@@ -136,7 +145,10 @@ class Person{
         return this;
     }
 }
+class EnemyOneLevel extends Person {
+    getUrl() { return 'img/skeleton.png'; }
 
+}
 
 
 
