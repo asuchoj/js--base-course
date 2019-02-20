@@ -20,9 +20,18 @@ function log(a) {
  * Если число кратно и 3 и 5 - вывести вместо числа `FizzBuzz`.
  * Для вывода использовать фукнцию `log` (аналогично заданию в классе).
  * В теле функции нельзя использовать  `if`, `switch`, тернарный оператор `? :`
+ *
+ * @param{number} num - число от 1 до 100
  */
-function fizzBuzz() {
+function fizzBuzz(num) {
   /* Ваше решение */
+  var meseges = ['fizzBuzz', 'Fizz', 'Buzz', 'Default'];
+  var config = [num % 5 && num % 3, num % 3, num % 5, 'Default'];
+  var resCount = [];
+
+  for(var i = 0; i < config.length; i++) {
+    resCount.push(config[i])
+  }
 }
 
 
@@ -35,9 +44,17 @@ function fizzBuzz() {
  */
 function isPolindrom(textString) {
   /* Ваше решение */
-  return undefined;
-}
 
+  /* Решение 1 */
+
+  // return textString.split('').reverse().join('') === textString;
+
+  /* Решение 2 */
+  for(var i = 0; i < Math.floor(textString.length / 2); i++ ){
+    if(textString[i] !== textString[textString.length - 1 - i]) return false;
+  }
+  return true;
+}
 
 /**
  * Реализовать фукнцию `drawCalendar` ,
@@ -61,6 +78,17 @@ function drawCalendar(year, month, htmlEl) {
  * @return {boolean} идентичны ли параметры по содержимому
  */
 function isDeepEqual(objA, objB) {
-  /* Ваше решение */
-  return undefined;
+  if(JSON.stringify(objA) === JSON.stringify(objB)) return true;
+
+  if(Object.prototype.toString.call(objA) === "[object Object]" && Object.prototype.toString.call(objB) === "[object Object]"){
+    for(let itemA in objA){
+      for(let itemB in objB){
+        if(JSON.stringify(objA[itemA]) !== JSON.stringify(objB[itemA]) || JSON.stringify(objA[itemB]) !== JSON.stringify(objB[itemB])) return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }

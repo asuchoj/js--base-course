@@ -19,7 +19,7 @@ describe('fizzBuzz', function() {
   window.log = function(a) {
     return str = str + a + '\n';
   };
-  fizzBuzz();
+  fizzBuzz(15);
 
   it('выводит правильные данные', function() {
     return assert.isOk(str.trim() === result.trim());
@@ -56,6 +56,12 @@ describe('isPolindrom', function() {
   });
   it('asdsb - не полиндром', function() {
     return assert.isOk(isPolindrom('asdsb') === false);
+  });
+  it('asdfghjhgfdsa - полиндром', function() {
+    return assert.isOk(isPolindrom('asdfghjhgfdsa') === true);
+  });
+  it('asdfghjhgfda - не полиндром', function() {
+    return assert.isOk(isPolindrom('asdfghjhgfda') === false);
   });
 });
 
